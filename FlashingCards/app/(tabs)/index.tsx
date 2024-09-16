@@ -8,17 +8,20 @@ import {
   withTiming,
   useAnimatedStyle,
 } from "react-native-reanimated";
+import { State, TapGestureHandler } from "react-native-gesture-handler";
 
 export default function HomeScreen() {
   const [flip, isFlipped] = useState(false);
   const [x, setX] = useState(0);
   const [cardSet, setCardSet] = useState([
-    { front: "Question 1", back: "Answer 1" },
-    { front: "Question 2", back: "Answer 2" },
-    { front: "Question 3", back: "Answer 3" },
-    { front: "Question 4", back: "Answer 4" },
-    { front: "Question 5", back: "Answer 5" },
+
+    { front: "What do you call it when you improve your looks?", back: "Looksmaxxing" },
+    { front: "What do you call it when you look better than someone?", back: "Mogging" },
+    { front: "When you get taxed on your food", back: "Fanum tax" },
+    { front: "What state in America has the most strange activities?", back: "Ohio" },
+    { front: "Synonym of charisma", back: "Rizz" },
   ]);
+  
   const [autoPlay, setAutoPlay] = useState(false);
   const rotation = useSharedValue(0);
 
@@ -45,11 +48,17 @@ export default function HomeScreen() {
     );
   };
 
-  const rotationAnim = useAnimatedStyle(() => {
-    return {
-      transform: [{ rotateY: `${rotation.value}deg` }],
-    };
-  });
+  const rotateFront = useAnimatedStyle (()=>{
+    return { 
+      transform: [{perspective: 1000}, {rotateX: `${rotation.value}deg`}]
+    }
+  })
+
+  const rotateBack = useAnimatedStyle (()=>{
+    return { 
+      transform: [{perspective: 1000}, {rotateX: `${rotation.value+180}deg`}]
+    }
+  })
 
   const shuffleAlgorithm = (array: any) => {
     for (let i = array.length - 1; i > 0; i--) {
@@ -72,46 +81,63 @@ export default function HomeScreen() {
     } else {
       setX(0);
     }
+    isFlipped(false);
+    rotation.value = 0;
   };
 
   const prevCard = () => {
     if (x > 0) {
       setX(x - 1);
     }
+    isFlipped(false);
+    rotation.value = 0;
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.topButtons}>
-        <Text style={{ borderWidth: 1, padding: 10 }} onPress={shuffleSet}>
-          Shuffle-Cards
-        </Text>
-        <Text
-          style={{ borderWidth: 1, padding: 10 }}
-          onPress={() => setAutoPlay(!autoPlay)}
-        >
-          {autoPlay ? "Stop Auto-Play" : "Start Auto-Play"}
-        </Text>
+      <View style={styles.cardContainer}>
+        <TapGestureHandler onHandlerStateChange={({nativeEvent}) =>{
+          if(nativeEvent.state == State.END){
+            flipCard();
+            }
+          }}>
+          <Animated.View style={[styles.card, rotateFront]}>
+            <Text style={styles.cardText}>{cardSet[x].front}</Text>
+          </Animated.View>
+        </TapGestureHandler>
+
+        <TapGestureHandler onHandlerStateChange={({nativeEvent}) =>{
+          if(nativeEvent.state == State.END){
+            flipCard();
+            }
+          }}>
+          <Animated.View style={[styles.card, rotateBack, styles.back]}>
+            <Text style={styles.cardText}>{cardSet[x].back}</Text>
+          </Animated.View>
+        </TapGestureHandler>
+        
       </View>
 
-      <Animated.View style={[rotationAnim]}>
-        <Text style={styles.card} onPress={flipCard}>
-          {flip ? (
-            <Text>{cardSet[x].back}</Text>
-          ) : (
-            <Text>{cardSet[x].front}</Text>
-          )}
-        </Text>
-      </Animated.View>
-
+     
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={prevCard}>
-          <Text style={styles.buttonText}>{"<"}</Text>
-        </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={nextCard}>
-          <Text style={styles.buttonText}>{">"}</Text>
-        </TouchableOpacity>
+         <TouchableOpacity style={styles.button} onPress={shuffleSet}>
+              <Text style={styles.buttonText}>{"↻"}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.button} onPress={prevCard}>
+            <Text style={styles.buttonText}>{"←"}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.button} onPress={nextCard}>
+            <Text style={styles.buttonText}>{"→"}</Text>
+          </TouchableOpacity>
+
+          
+            <TouchableOpacity style={styles.button} onPress={() => setAutoPlay(!autoPlay)}>
+              <Text style={styles.buttonText}> {autoPlay ? "❚❚" : "▶"}</Text>
+            </TouchableOpacity>
+
       </View>
     </View>
   );
@@ -123,15 +149,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
-  topButtons: {
-    flex: 1,
-    flexDirection: "row",
-    width: "100%",
-    justifyContent: "space-evenly",
-    alignItems: "center",
+  cardContainer:{
+     position: 'relative',
   },
-
   card: {
     backgroundColor: "white",
     padding: 100,
@@ -146,13 +166,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     textAlign: "center",
-  },
-  cardBack: {
-    transform: [{ rotateY: "180deg" }],
+    backfaceVisibility: 'hidden',
+    padding: 20,
   },
   cardText: {
     fontSize: 20,
+    fontWeight: "light",
+    justifyContent: "center",
     textAlign: "center",
+    fontFamily: "Arial",
+  },
+  back:{
+    position: 'absolute',
   },
   button: {
     width: 60,
@@ -163,15 +188,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     justifyContent: "center",
     alignItems: "center",
-    margin: 10,
+    textAlign: "center",
+    fontSize: 20,
   },
   buttonText: {
     color: "#b3b3b3",
     fontSize: 24,
+    fontFamily: "Montserrat",
   },
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
+    padding: 20,
   },
 });
