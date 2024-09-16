@@ -1,3 +1,6 @@
+<h1> After Pulling </h1>
+ <i>cd flashingcards</i>
+
 <h1> Install Dependencies </h1>
  <i> npm install <br> </i>
 
