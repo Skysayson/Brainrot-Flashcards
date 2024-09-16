@@ -14,12 +14,14 @@ export default function HomeScreen() {
   const [flip, isFlipped] = useState(false);
   const [x, setX] = useState(0);
   const [cardSet, setCardSet] = useState([
+
     { front: "What do you call it when you improve your looks?", back: "Looksmaxxing" },
     { front: "What do you call it when you look better than someone?", back: "Mogging" },
     { front: "When you get taxed on your food", back: "Fanum tax" },
     { front: "What state in America has the most strange activities?", back: "Ohio" },
     { front: "Synonym of charisma", back: "Rizz" },
   ]);
+  
   const [autoPlay, setAutoPlay] = useState(false);
   const rotation = useSharedValue(0);
 
@@ -116,8 +118,7 @@ export default function HomeScreen() {
         
       </View>
 
-      
-
+     
       <View style={styles.buttonContainer}>
 
          <TouchableOpacity style={styles.button} onPress={shuffleSet}>
@@ -148,18 +149,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  topButtons: {
-    flex: 1,
-    flexDirection: "row",
-    width: "100%",
-    justifyContent: "space-evenly",
-    alignItems: "center",
-  },
   cardContainer:{
      position: 'relative',
   },
   card: {
     backgroundColor: "white",
+    padding: 100,
+    margin: 10,
     borderRadius: 30,
     elevation: 20,
     shadowOffset: { width: 0, height: 2 },
@@ -194,7 +190,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     textAlign: "center",
     fontSize: 20,
-    margin: 10,
   },
   buttonText: {
     color: "#b3b3b3",
