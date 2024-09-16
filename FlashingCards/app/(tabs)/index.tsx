@@ -1,5 +1,5 @@
 import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Animated from "react-native-reanimated";
 import {
   Easing,
@@ -8,32 +8,51 @@ import {
   withTiming,
   useAnimatedStyle,
 } from "react-native-reanimated";
-import { State, TapGestureHandler } from "react-native-gesture-handler";
+import {
+  State,
+  TapGestureHandler,
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
 
 export default function HomeScreen() {
-  const [flip, isFlipped] = useState(false);
   const [x, setX] = useState(0);
+  const [flip, isFlipped] = useState(false);
   const [cardSet, setCardSet] = useState([
-
-    { front: "What do you call it when you improve your looks?", back: "Looksmaxxing" },
-    { front: "What do you call it when you look better than someone?", back: "Mogging" },
+    {
+      front: "What do you call it when you improve your looks?",
+      back: "Looksmaxxing",
+    },
+    {
+      front: "What do you call it when you look better than someone?",
+      back: "Mogging",
+    },
     { front: "When you get taxed on your food", back: "Fanum tax" },
-    { front: "What state in America has the most strange activities?", back: "Ohio" },
+    {
+      front: "What state in America has the most strange activities?",
+      back: "Ohio",
+    },
     { front: "Synonym of charisma", back: "Rizz" },
   ]);
-  
+
   const [autoPlay, setAutoPlay] = useState(false);
   const rotation = useSharedValue(0);
 
   useEffect(() => {
-    let intervalId: NodeJS.Timeout | undefined;
+    let cardInterval: NodeJS.Timeout | undefined;
+
     if (autoPlay) {
-      intervalId = setInterval(() => {
-        setX((prevX) => (prevX < cardSet.length - 1 ? prevX + 1 : 0));
-      }, 2000); // Change card every 2 seconds
+      cardInterval = setInterval(() => {
+        flipCard();
+        setTimeout(() => {
+          nextCard();
+        }, 2000);
+      }, 5000);
     }
-    return () => clearInterval(intervalId);
-  }, [autoPlay]);
+
+    return () => {
+      clearInterval(cardInterval);
+    };
+  }, [autoPlay, cardSet.length, flip]);
 
   const flipCard = () => {
     rotation.value = withTiming(
@@ -48,17 +67,20 @@ export default function HomeScreen() {
     );
   };
 
-  const rotateFront = useAnimatedStyle (()=>{
-    return { 
-      transform: [{perspective: 1000}, {rotateX: `${rotation.value}deg`}]
-    }
-  })
+  const rotateFront = useAnimatedStyle(() => {
+    return {
+      transform: [{ perspective: 1000 }, { rotateX: `${rotation.value}deg` }],
+    };
+  });
 
-  const rotateBack = useAnimatedStyle (()=>{
-    return { 
-      transform: [{perspective: 1000}, {rotateX: `${rotation.value+180}deg`}]
-    }
-  })
+  const rotateBack = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { perspective: 1000 },
+        { rotateX: `${rotation.value + 180}deg` },
+      ],
+    };
+  });
 
   const shuffleAlgorithm = (array: any) => {
     for (let i = array.length - 1; i > 0; i--) {
@@ -95,49 +117,55 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.cardContainer}>
-        <TapGestureHandler onHandlerStateChange={({nativeEvent}) =>{
-          if(nativeEvent.state == State.END){
-            flipCard();
-            }
-          }}>
-          <Animated.View style={[styles.card, rotateFront]}>
-            <Text style={styles.cardText}>{cardSet[x].front}</Text>
-          </Animated.View>
-        </TapGestureHandler>
+      <GestureHandlerRootView>
+        <View style={styles.cardContainer}>
+          <TapGestureHandler
+            onHandlerStateChange={({ nativeEvent }) => {
+              if (nativeEvent.state == State.END) {
+                flipCard();
+              }
+            }}
+          >
+            <Animated.View style={[styles.card, rotateFront]}>
+              <Text>Question {x + 1}</Text>
+              <Text style={styles.cardText}>{cardSet[x].front}</Text>
+            </Animated.View>
+          </TapGestureHandler>
 
-        <TapGestureHandler onHandlerStateChange={({nativeEvent}) =>{
-          if(nativeEvent.state == State.END){
-            flipCard();
-            }
-          }}>
-          <Animated.View style={[styles.card, rotateBack, styles.back]}>
-            <Text style={styles.cardText}>{cardSet[x].back}</Text>
-          </Animated.View>
-        </TapGestureHandler>
-        
-      </View>
+          <TapGestureHandler
+            onHandlerStateChange={({ nativeEvent }) => {
+              if (nativeEvent.state == State.END) {
+                flipCard();
+              }
+            }}
+          >
+            <Animated.View style={[styles.card, rotateBack, styles.back]}>
+              <Text>Answer {x + 1}</Text>
+              <Text style={styles.cardText}>{cardSet[x].back}</Text>
+            </Animated.View>
+          </TapGestureHandler>
+        </View>
+      </GestureHandlerRootView>
 
-     
       <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.button} onPress={shuffleSet}>
+          <Text style={styles.buttonText}>{"↻"}</Text>
+        </TouchableOpacity>
 
-         <TouchableOpacity style={styles.button} onPress={shuffleSet}>
-              <Text style={styles.buttonText}>{"↻"}</Text>
-          </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={prevCard}>
+          <Text style={styles.buttonText}>{"←"}</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity style={styles.button} onPress={prevCard}>
-            <Text style={styles.buttonText}>{"←"}</Text>
-          </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={nextCard}>
+          <Text style={styles.buttonText}>{"→"}</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity style={styles.button} onPress={nextCard}>
-            <Text style={styles.buttonText}>{"→"}</Text>
-          </TouchableOpacity>
-
-          
-            <TouchableOpacity style={styles.button} onPress={() => setAutoPlay(!autoPlay)}>
-              <Text style={styles.buttonText}> {autoPlay ? "❚❚" : "▶"}</Text>
-            </TouchableOpacity>
-
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => setAutoPlay(!autoPlay)}
+        >
+          <Text style={styles.buttonText}> {autoPlay ? "❚❚" : "▶"}</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -149,12 +177,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  cardContainer:{
-     position: 'relative',
+  cardContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
+
   card: {
     backgroundColor: "white",
-    padding: 100,
     margin: 10,
     borderRadius: 30,
     elevation: 20,
@@ -166,7 +196,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     textAlign: "center",
-    backfaceVisibility: 'hidden',
+    backfaceVisibility: "hidden",
     padding: 20,
   },
   cardText: {
@@ -176,8 +206,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontFamily: "Arial",
   },
-  back:{
-    position: 'absolute',
+  back: {
+    position: "absolute",
   },
   button: {
     width: 60,
